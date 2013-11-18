@@ -15,16 +15,16 @@ import random
 ################################# modify below #####################################
 
 
-inIGCDir = "./"
+inIGCDir = "./igc"
 outFile = "./task.kml"
 taskName = "Task"
 modelscale = "5"
 crateFlyForAllPilots = True
-pilots2follow = ["CHRISTIAN CIECH","ALEX PLONER","ANTON MORODER","DAVIDE GUIDUCCI","KARL REICHEGGER"] # Ingnored if crateFlyForAllPilots
-flySpeed = 6.5
+pilots2follow = ["CHRISTIAN CIECH","ALESSANDRO PLONER","EDOARDO GIUDICEANDREA"] # Ingnored if crateFlyForAllPilots
+flySpeed = 10
 tilt = 75
 min_distance = 1500
-max_distance = 2000
+max_distance = 3000
 split_tout_time = 1
 heigth_offset = 100
 
@@ -69,14 +69,15 @@ class igcClass(object):
 
 		while ( True ):
 			line = fo.readline()
-			if ( line.split(" ")[0] == "HOPLTPILOT:" ):
+			#print line
+			if ( line.split(" ")[0] == "HOPLTPILOT:" or  line.split(" ")[0] == "HFPLTPILOT:") :
 				self.PilotName = line[12:len(line)-1]
 			if line[0:5] == "HFDTE":
 				self.date = line[5:]
 				self.day = line[5:7]
 				self.month = line[7:9]
 				self.year = line[9:11]
-			if ( line.split(" ")[0] == "HOSITSite:" ):
+			if ( line.split(" ")[0] == "HOSITSite:" or line.split(" ")[0][0] == 'B'):
 				break
 		
 		fo.close()
@@ -86,7 +87,7 @@ class igcClass(object):
 		fo = open(self.filename, "r")
 		while ( True ):
 			line = fo.readline()
-			if ( line.split(" ")[0] == "HOSITSite:" ):
+			if ( line.split(" ")[0] == "HOSITSite:" or line.split(" ")[0][0] == 'B' ):
 				break
 		line = fo.readline()
 		code = line[0]
