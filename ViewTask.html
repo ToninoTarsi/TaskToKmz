@@ -1,22 +1,37 @@
 <html>
    <head>
-      <title>Trofeo Monte Cucco 2013 - Task 1</title>
-      <script src="https://www.google.com/jsapi"> </script> 
-      <script src="http://earth-api-samples.googlecode.com/svn/trunk/lib/kmldomwalk.js" type="text/javascript"> </script>
+		<title>Trofeo Monte Cucco 2013 - Task 1</title>
+		
+		<link rel="stylesheet" href="css/jquery.multiselect.css" />
+		<link rel="stylesheet" href="css/ui-darkness/jquery-ui-1.10.3.custom.min.css" />
 
+		
+		
+		<script src="https://www.google.com/jsapi"> </script> 
+		<script src="http://earth-api-samples.googlecode.com/svn/trunk/lib/kmldomwalk.js" type="text/javascript"> </script>
 
-
+		<script src="js/jquery-1.9.1.js"></script>
+		<script src="js/jquery-ui-1.10.3.custom.min.js"></script>
+		<script src="js/jquery.multiselect.min.js"></script>
+		
+		<script type="text/javascript">
+			
+		</script>
 
 
       <script type="text/javascript">
 
+      	$(function(){
+		});
+      
       	 var href = 'http://www.vololiberomontecucco.it/docs/trofeo2013/task1.kmz';
          //var href = 'http://www.vololiberomontecucco.it/docs/05082013.kmz';
          
          var ge;
          var tour;
          var tours = new Array();
-
+         var placemarks = new Array();
+         
          google.load("earth", "1");
 
          function init() {
@@ -28,29 +43,57 @@
             ge.getWindow().setVisibility(true);
             ge.getNavigationControl().setVisibility(ge.VISIBILITY_SHOW);
 
+            
             enterTour();
          }
 
          function failureCB(errorCode) {
          }
 
-         function addPilot(i,pilotName) {
+         function addPilot(i,pilotName,checked) {
         	 //alert(tour.getName());
-        	 var pilotSelect =document.getElementById("pilot");
+        	 var pilotsActive =document.getElementById("pilotsActive");
+
+        
+	         var option1=document.createElement("option");
+
+	
+	         option1.text= pilotName;
+	         option1.value = i;
+	         option1.selected = checked;
+	         try {
+	           // for IE earlier than version 8
+	           pilotsActive.add(option1,pilotsActive.options[null]);
+
+	         } catch (e) {
+	        	 pilotsActive.add(option1,null);
+
+	         }
+         }
+         
+         function addTour(i,pilotName) {
+        	 //alert(tour.getName());
+        	 var pilotSelect =document.getElementById("pilotToFollow");
+
+ 
 	         var option=document.createElement("option");
+
 	         option.text= pilotName;
 	         option.value = i;
 	         try {
 	           // for IE earlier than version 8
 	           pilotSelect.add(option,pilotSelect.options[null]);
+
 	         } catch (e) {
 	        	 pilotSelect.add(option,null);
+
 	         }
          }
          
          // Tour control functions.
          function enterTour() {
         	 
+
              google.earth.fetchKml(ge, href, fetchCallback);
 
              function fetchCallback(fetchedKml) {
@@ -67,24 +110,82 @@
 
                 // Walk through the KML to find the tour object; assign to variable 'tour.'
                 var i = 0;
+                var k = 0;
                 walkKmlDom(fetchedKml, function() {
+                   //alert(this.getType());
                    if (this.getType() == 'KmlTour') {
                       tour = this;
                       tours[i] = this;
-                      addPilot(i,tour.getName());
+                      addTour(i,tour.getName());
                       i++;
-                      tours
- 
                       //return false;
                    }
+                   if (this.getType() == 'KmlPlacemark') {
+                       placemarks[k] = this;
+                       addPilot(k,this.getName(),this.getVisibility());
+                       k++;
+                       //return false;
+                    }
+                   
                 });
                 document.getElementById("playButton").disabled = false; 
                 ge.getTourPlayer().setTour(tours[0]);
-                //alert("pp");
-             } 
-        	 
+                
+                $("#pilotsActive").multiselect({
+                	   click: function(event, ui){
+                		   		//alert(ui.value + ' ' + (ui.checked ? 'checked' : 'unchecked') );
+                		   		if ( ui.checked ) 
+                		   		  placemarks[ui.value].setVisibility(true);
+                		   		else
+                  		   		  placemarks[ui.value].setVisibility(false);
 
- 
+                		   },
+                		   beforeopen: function(){
+                		      //alert("Select about to be opened...");
+                		   },
+                		   open: function(){
+                			   //alert("Select opened!");
+                		   },
+                		   beforeclose: function(){
+                			   //alert("Select about to be closed...");
+                		   },
+                		   close: function(){
+                			   //alert("Select closed!");
+                		   },
+                		   checkAll: function(){
+                			   for (var i = 0; i < placemarks.length; i++) {
+                				   placemarks[i].setVisibility(true);
+                				}
+                		   },
+                		   uncheckAll: function(){
+                			   for (var i = 0; i < placemarks.length; i++) {
+                				   placemarks[i].setVisibility(false);
+                				}
+                		   },
+                		   optgrouptoggle: function(event, ui){
+                		      var values = $.map(ui.inputs, function(checkbox){
+                		         return checkbox.value;
+                		      }).join(", ");
+                		      
+                		      alert("Checkboxes " + (ui.checked ? "checked" : "unchecked") + ": " + values);
+                		   }
+                		});
+                
+                $("#pilotToFollow").multiselect({
+                	   multiple: false,
+                	   header: "Select a Pilot",
+                	   noneSelectedText: "Select a Pilot",
+                	   selectedList: 1
+                	});
+                
+                $("#playButton").button()
+                $("#pauseButton").button()
+                
+
+                $("#controls").show();
+                $("#loader").hide();
+
+             }
          }
          
          function playTour() {
@@ -102,38 +203,59 @@
          }
 
          function pilotChanged(){
-        	  var myselect = document.getElementById("pilot");
+        	  var myselect = document.getElementById("pilotToFollow");
         	  var pilotID = myselect.options[myselect.selectedIndex].value;
         	  
         	  var currentTime = ge.getTourPlayer().getCurrentTime();
+        	  var oldDuration = ge.getTourPlayer().getDuration()
+        	  
         	  ge.getTourPlayer().setTour(tours[pilotID]);
-        	  ge.getTourPlayer().setCurrentTime(currentTime);
+        	  
+        	  var newDuration = ge.getTourPlayer().getDuration()
+        	  
+        	  ge.getTourPlayer().setCurrentTime(currentTime * oldDuration / newDuration);
+        	  
         	  ge.getTourPlayer().play();
         	}
          
          google.setOnLoadCallback(init);
          
-         
+
          
          
       </script>
+      
+      
+      <script type="text/javascript">
+      
+      
+      
+      </script>
    </head>
    <body>
-     <div id ="controls">
+   	<div id ="app"> 
+     <div id ="controls" style = "display:none" >
      	 <input id="playButton" type="button" onclick="playTour()" value="Start" disabled/>
-     	 <input type="button" onclick="pauseTour()" value="Pause"/>
+     	 <input id="pauseButton"type="button" onclick="pauseTour()" value="Pause"/>
      	
 <!--          <input type="button" onclick="enterTour()" value="Task1"/> -->
          
-         Select Pilot to follow: <select id="pilot" onchange="pilotChanged()">
-         </select>
+         Select Pilot to follow: <select id="pilotToFollow" onchange="pilotChanged()"> </select>
          
+		<select id="pilotsActive" multiple="multiple" >		</select>      
+		   
 <!--          <input type="button" onclick="resetTour()" value="Stop/Reset Tour"/> -->
 <!--          <input type="button" onclick="exitTour()" value="Exit Tour"/> -->
       </div>
       <hr>
-      <div id="map3d" style="height: 100%; width: 100%;"></div>
- 
-
+      <div id="map3d" style="height: 85%; width: 100%;"></div>
+ 		
+ 	 <div id="footer" >
+ 	 <p>Realized with TaskToKmz  - Source Code available @ <a href="https://github.com/ToninoTarsi/TaskToKmz">https://github.com/ToninoTarsi/TaskToKmz</a>  </p>
+ 	 
+ 	 </div>
+ 	 
+ 	  
+	</div>
    </body>
 </html>

@@ -19,9 +19,9 @@ inIGCDir = "./igc"
 outFile = "./task.kml"
 taskName = "Task"
 modelscale = "5"
-crateFlyForAllPilots = True
 startTime = "1230"  # or use "none"
 endTime = "1800"
+crateFlyForAllPilots = True
 pilots2follow = ["CHRISTIAN CIECH","ALESSANDRO PLONER","EDOARDO GIUDICEANDREA"] # Ingnored if crateFlyForAllPilots
 flySpeed = 8
 tilt = 75
@@ -91,24 +91,18 @@ class igcClass(object):
 		
 	def GetPoints(self):
 		fo = open(self.filename, "r")
-		while ( True ):
-			line = fo.readline()
-			if ( line.split(" ")[0] == "HOSITSite:" or line.split(" ")[0][0] == 'B' ):
-				break
-		line = fo.readline()
-		code = line[0]
-		listGPS = []
 		
-		while ( code == "B" ):
-			theTime = line[1:7]
-			if isAfterStart(theTime,startTime):
-				listGPS.append(gpsPoint(line[1:7],line[7:15],line[16:24],line[26:30]))
-			line = fo.readline()
+		listGPS = []
+		for line in fo:
 			code = line[0]
-
+			if ( code == "B" ):
+				theTime = line[1:7]
+				if isAfterStart(theTime,startTime):
+					listGPS.append(gpsPoint(line[1:7],line[7:15],line[16:24],line[26:30]))
 		fo.close()
 		return listGPS
 				
+
 		
 		
 
