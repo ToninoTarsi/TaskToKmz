@@ -20,19 +20,25 @@ outFile = "./task.kml"
 taskName = "Task"
 modelscale = "5"
 crateFlyForAllPilots = True
+startTime = "1230"  # or use "none"
+endTime = "1800"
 pilots2follow = ["CHRISTIAN CIECH","ALESSANDRO PLONER","EDOARDO GIUDICEANDREA"] # Ingnored if crateFlyForAllPilots
-flySpeed = 10
+flySpeed = 8
 tilt = 75
 min_distance = 1500
-max_distance = 3000
+max_distance = 2500
 split_tout_time = 1
 heigth_offset = 100
 
 ################################# Do not modify below #####################################
 
 
-
-
+def isAfterStart(theTime,startTime):
+	r = ( int(theTime[0:2])*60+int(theTime[3:4]) ) -  ( int(startTime[0:2])*60+int(startTime[3:4]) )
+	if ( r >= 0):
+		return True
+	else:
+		return False
 
 class gpsPoint(object):
 	def __init__(self, t,y,x,h):
@@ -94,7 +100,9 @@ class igcClass(object):
 		listGPS = []
 		
 		while ( code == "B" ):
-			listGPS.append(gpsPoint(line[1:7],line[7:15],line[16:24],line[26:30]))
+			theTime = line[1:7]
+			if isAfterStart(theTime,startTime):
+				listGPS.append(gpsPoint(line[1:7],line[7:15],line[16:24],line[26:30]))
 			line = fo.readline()
 			code = line[0]
 
