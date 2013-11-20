@@ -28,7 +28,7 @@ tilt = 75
 min_distance = 1500
 max_distance = 2500
 split_tout_time = 1
-heigth_offset = 100
+heigth_offset = 50
 
 ################################# Do not modify below #####################################
 
