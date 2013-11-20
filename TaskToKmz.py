@@ -16,10 +16,10 @@ import random
 
 
 inIGCDir = "./igc"
-outFile = "./task.kml"
+outFile = "./task1.kml"
 taskName = "Task"
 modelscale = "5"
-startTime = "1230"  # or use "none"
+startTime = "1214"  # or use "none" remenber this is UTC
 endTime = "1800"
 crateFlyForAllPilots = True
 pilots2follow = ["CHRISTIAN CIECH","ALESSANDRO PLONER","EDOARDO GIUDICEANDREA"] # Ingnored if crateFlyForAllPilots
@@ -28,13 +28,14 @@ tilt = 75
 min_distance = 1500
 max_distance = 2500
 split_tout_time = 1
-heigth_offset = 50
+heigth_offset = 0
 
 ################################# Do not modify below #####################################
 
 
 def isAfterStart(theTime,startTime):
-	r = ( int(theTime[0:2])*60+int(theTime[3:4]) ) -  ( int(startTime[0:2])*60+int(startTime[3:4]) )
+	#print theTime,startTime,theTime[0:2],theTime[2:4]
+	r = ( int(theTime[0:2])*60+int(theTime[2:4]) ) -  ( int(startTime[0:2])*60+int(startTime[2:4]) )
 	if ( r >= 0):
 		return True
 	else:
@@ -181,7 +182,11 @@ outfo.write("""	<Folder>
 i = 0
 for pilot in listigc:			
 	print pilot.PilotName
-				
+	
+	points = pilot.GetPoints()
+	if ( len(points) == 0) :
+		continue
+			
 	template = string.Template("""<Placemark>
 			<name>$pilotName</name>
 			<styleUrl>#style$i</styleUrl>
@@ -194,7 +199,6 @@ for pilot in listigc:
 	outfo.write("""			<gx:Track>
 				<altitudeMode>absolute</altitudeMode>""")
 
-	points = pilot.GetPoints()
 	for point in points:
 		when = "            <when>20"+pilot.year+"-"+pilot.month+"-"+pilot.day+"T"+point.t[0:2]+":"+point.t[2:4]+":"+point.t[4:6]+"Z</when>"
 		outfo.write(when+"\n")
@@ -232,12 +236,14 @@ for pilot in listigc:
 		</Placemark>
 		""")
 	
-	
-	d = dict(s=modelscale)
-	d.update(x=points[0].x)	
-	d.update(y=points[0].y)	
-	d.update(h=points[0].h)			
-	outfo.write(template.safe_substitute(d))	
+	try:
+		d = dict(s=modelscale)
+		d.update(x=points[0].x)	
+		d.update(y=points[0].y)	
+		d.update(h=points[0].h)			
+		outfo.write(template.safe_substitute(d))	
+	except:
+		print len(points)
 	
 	i = i + 1	
 
@@ -251,14 +257,18 @@ outfo.write("""	<Folder>
 
 # #########################    Create tour
 
-for pilot in listigc:			
+for pilot in listigc:	
+	
+	points = pilot.GetPoints()
+	if ( len(points) == 0) :
+		continue
+			
 	if pilot.PilotName in pilots2follow or crateFlyForAllPilots :
 		print "Creating tour for" + pilot.PilotName
 		outfo.write("""<gx:Tour>
 			<name>"""+pilot.PilotName+"""</name>
 			<gx:Playlist>""")
 		
-		points = pilot.GetPoints()
 		i = 0
 		hp = 0
 		heading = random.randint(0, 360)
