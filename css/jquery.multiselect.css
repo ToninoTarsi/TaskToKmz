@@ -20,4 +20,4 @@
 .ui-multiselect-checkboxes li.ui-multiselect-optgroup-label a { display:block; padding:3px; margin:1px 0; text-decoration:none }
 
 /* remove label borders in IE6 because IE6 does not support transparency */
-* html .ui-multiselect-checkboxes label { border:none }
+* html .ui-multiselect-checkboxes label { border:none}
