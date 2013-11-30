@@ -1,15 +1,27 @@
-<html>
-   <head>
-		<title>TaskToKmz</title>
-		
+<HTML>
+<HEAD>
+<TITLE>Layout Example</TITLE>
 
-		
-		
 		<link rel="stylesheet" href="css/jquery.multiselect.css" />
 		<link rel="stylesheet" href="css/ui-darkness/jquery-ui-1.10.3.custom.min.css" />
 
+
+		
+		<script src="https://www.google.com/jsapi"> </script> 
+		<script src="http://earth-api-samples.googlecode.com/svn/trunk/lib/kmldomwalk.js" type="text/javascript"> </script>
+
+		<script type="text/javascript"  src="js/jquery-1.9.1.js"></script>
+		<SCRIPT type="text/javascript" src="js/jquery.layout-latest.min.js"></SCRIPT>
+		
+		<script src="js/jquery-ui-1.10.3.custom.min.js"></script>
+		<script src="js/jquery.multiselect.min.js"></script>
+		
+		<script id="loader" src="js/ajax-loader.js" type="text/javascript"></script>
+		
+		
+		
 				<style>
- 			.ajax_loader {background: url("img/spinner_squares_circle.gif") no-repeat bottom center  transparent;width:100%;height:100%;}
+ 			.ajax_loader {background: url("img/spinner_squares_circle.gif") no-repeat bottom center  transparent;width:230px;height:100%;}
 			.blue-loader .ajax_loader {background: url("img/ajax-loader_blue.gif") no-repeat center center transparent;}
 
 			.iframe-container {z-index: 100;}
@@ -31,24 +43,71 @@
 				background: black;
 				}
 			
+			.ui-layout-pane {
+  				padding: 0px !important;
+			}
+
+			#footer  
+			{
+			     color: #f0c;
+			     font-size: 12px;
+			     font-family: Verdana, Geneva, Arial, sans-serif;
+			     background-color: #000;
+			     text-align: center;
+			     position: absolute;
+			     bottom: 50px;
+			     left: 0px;
+			     width: 100%;
+			     height: 18px
+			     }
 
 		</style>
 		
-		<script src="https://www.google.com/jsapi"> </script> 
-		<script src="http://earth-api-samples.googlecode.com/svn/trunk/lib/kmldomwalk.js" type="text/javascript"> </script>
+			<style type="text/css">
 
-		<script src="js/jquery-1.9.1.js"></script>
-		<script src="js/jquery-ui-1.10.3.custom.min.js"></script>
-		<script src="js/jquery.multiselect.min.js"></script>
-		<script id="loader" src="js/ajax-loader.js" type="text/javascript"></script>
-		
+	/* remove padding and scrolling from elements that contain an Accordion OR a content-div */
+	.ui-layout-center ,	/* has content-div */
+	.ui-layout-west ,	/* has Accordion */
+	.ui-layout-east ,	/* has content-div ... */
+	.ui-layout-east .ui-layout-content { /* content-div has Accordion */
+		padding: 0;
+		overflow: hidden;
+		background:		#000;
+	}
+	.ui-layout-center P.ui-layout-content {
+		line-height:	1.4em;
+		margin:			0; /* remove top/bottom margins from <P> used as content-div */
+	}
+	h3, h4 { /* Headers & Footer in Center & East panes */
+		font-size:		1.1em;
+		background:		#EEF;
+		border:			1px solid #BBB;
+		border-width:	0 0 1px;
+		padding:		7px 10px;
+		margin:			0;
+	}
+	.ui-layout-east h4 { /* Footer in East-pane */
+		font-size:		0.9em;
+		font-weight:	normal;
+		border-width:	1px 0 0;
+	}
+	
+	.ui-layout-west{ /
+		font-size:		1.1em;
+		background:		#000;
+		border:			1px solid #BBB;
+		border-width:	0 0 1px;
+		padding:		0px 0px;
+		margin:			0;
+	}
+	</style>
 		<script type="text/javascript">
-			$.urlParam = function(name){
-			    var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
-			    return results[1] || 0;
-			}
-			$(function(){
-	      		box1 = new ajaxLoader($("#controls"));
+			$(document).ready(function () {
+				
+				$('body').layout({ 	west__size:270,
+									applyDefaultStyles: true });
+				
+				box1 = new ajaxLoader($("#controls"));
 	      		
 	            audio = $('audio')[0]; 
 	            audio.addEventListener('ended', function() {
@@ -56,459 +115,413 @@
 	                this.play();
 	            }, false);
 
+			});
+			
+			$.urlParam = function(name) {
+			    var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
+			    return results[1] || 0;
+			}
+			
+			$(function(){
+	      		
 	    		
 			});
-
+			
+			
 		</script>
 
+     <script type="text/javascript">
 
-      <script type="text/javascript">
+   	var appPath = document.location.href.replace(/\/[^\/]*$/, '/');
 
-      	var appPath = document.location.href.replace(/\/[^\/]*$/, '/');
+    
+	var audio;
+	
 
-      
-		var audio;
-		
+     
+     var href = $.urlParam('kmz'); // name
+     var namearr = href.split("/");
+     name = namearr[namearr.length -1 ]
+     document.title = name.split(".")[0];
+//   	 if ( href == null ) {
+//   		 alert("kmz not defined. Usage : ViewTask.html?kmz=fullurl.kmz");
+//   		 return;
+//   	 } 
+  	 //var href = 'http://www.vololiberomontecucco.it/TaskToKmz/trofeo2013_task1.kmz';
+     //var href = 'http://www.vololiberomontecucco.it/docs/05082013.kmz';
+     
+     var box1;
+     var ge;
+     var fullScreenState = false;
+     var noFullScreenIcon = null;
+     var fullScreenIcon = null;
+     var tour;
+     var tours = new Array();
+     var placemarks = new Array();
+     
+     google.load("earth", "1");
+     google.load("maps", "2");
+     
+     function init() {
+        google.earth.createInstance('map3d', initCB, failureCB);
+     }
 
-         
-         var href = $.urlParam('kmz'); // name
-         var namearr = href.split("/");
-         name = namearr[namearr.length -1 ]
-         document.title = name.split(".")[0];
-//       	 if ( href == null ) {
-//       		 alert("kmz not defined. Usage : ViewTask.html?kmz=fullurl.kmz");
-//       		 return;
-//       	 } 
-      	 //var href = 'http://www.vololiberomontecucco.it/TaskToKmz/trofeo2013_task1.kmz';
-         //var href = 'http://www.vololiberomontecucco.it/docs/05082013.kmz';
-         
-         var box1;
-         var ge;
-         var fullScreenState = false;
-         var noFullScreenIcon = null;
-         var fullScreenIcon = null;
-         var tour;
-         var tours = new Array();
-         var placemarks = new Array();
-         
-         google.load("earth", "1");
-         google.load("maps", "2");
-         
-         function init() {
-            google.earth.createInstance('map3d', initCB, failureCB);
-         }
-
-         
-//          function createControls() {
-//         	  var selectpilotToFollow = document.createElement('button');
-//            	  selectpilotToFollow.id="pilotToFollow1";
-// //           	  selectpilotToFollow.onchange="pilotChanged()";
-//           	  // create an IFRAME 
-//            	  var iframeShim = document.createElement('iframe');
-//            	  iframeShim.frameBorder = 0;
-//            	  iframeShim.scrolling = 'no';
-//            	  iframeShim.src = (navigator.userAgent.indexOf('MSIE 6') >= 0) ?
-//            	      '' : 'javascript:void(0);';
-
-//            	  // position the button and IFRAME shim
- 
-//             	  selectpilotToFollow.style.position = iframeShim.style.position = 'absolute';
-//             	  selectpilotToFollow.style.left = iframeShim.style.left =  '500px';
-//             	  selectpilotToFollow.style.top = iframeShim.style.top =  '500px';
-//             	  selectpilotToFollow.style.width = iframeShim.style.width = '100px';
-//             	  selectpilotToFollow.style.height = iframeShim.style.height = '100px';
-           	  
-//            	  // set up z-orders
-//            	  selectpilotToFollow.style.zIndex = 10;
-//            	  iframeShim.style.zIndex = selectpilotToFollow.style.zIndex - 1;
-           	  
-//            	  // set up click handler
-//            	  addDomListener(selectpilotToFollow, 'click', function(evt) {
-//            	    alert('You clicked the native HTML button!');
-           	    
-//            	    if (evt.preventDefault) {
-//            	      evt.preventDefault();
-//            	      evt.stopPropagation();
-//            	    }
-//            	    return false;
-//            	  });
-           	  
-//            	  // add the iframe shim and button
-//            	  document.body.appendChild(selectpilotToFollow);
-//            	  document.body.appendChild(iframeShim);
-           	  
-//          }  
-         
-         function initCB(instance) {
-            ge = instance;
-            ge.getWindow().setVisibility(true);
-            ge.getNavigationControl().setVisibility(ge.VISIBILITY_SHOW);
-
-            
-            enterTour();
-            
-            createFullScreenIcon();
-            createNormalScreenIcon();
-            
-            google.earth.addEventListener(ge.getWindow(), "click", handleMouseClick);
-            
-         }
-
-         function failureCB(errorCode) {
-         }
-
-         function addPilot(i,pilotName,checked) {
-        	 //alert(tour.getName());
-        	 var pilotsActive =document.getElementById("pilotsActive");
+     
+     
+     function initCB(instance) {
+        ge = instance;
+        ge.getWindow().setVisibility(true);
+        ge.getNavigationControl().setVisibility(ge.VISIBILITY_SHOW);
 
         
-	         var option1=document.createElement("option");
+        enterTour();
+        
+        createFullScreenIcon();
+        createNormalScreenIcon();
+        
+        google.earth.addEventListener(ge.getWindow(), "click", handleMouseClick);
+        
+     }
 
-	
-	         option1.text= pilotName;
-	         option1.value = i;
-	         option1.selected = checked;
-	         try {
-	           // for IE earlier than version 8
-	           pilotsActive.add(option1,pilotsActive.options[null]);
+     function failureCB(errorCode) {
+     }
 
-	         } catch (e) {
-	        	 pilotsActive.add(option1,null);
+     function addPilot(i,pilotName,checked) {
+    	 //alert(tour.getName());
+    	 var pilotsActive =document.getElementById("pilotsActive");
 
-	         }
+    
+         var option1=document.createElement("option");
+
+
+         option1.text= pilotName;
+         option1.value = i;
+         option1.selected = checked;
+         try {
+           // for IE earlier than version 8
+           pilotsActive.add(option1,pilotsActive.options[null]);
+
+         } catch (e) {
+        	 pilotsActive.add(option1,null);
+
          }
-         
-         function addTour(i,pilotName) {
-        	 //alert(tour.getName());
-        	 var pilotSelect =document.getElementById("pilotToFollow");
+     }
+     
+     function addTour(i,pilotName) {
+    	 //alert(tour.getName());
+    	 var pilotSelect =document.getElementById("pilotToFollow");
 
- 
-	         var option=document.createElement("option");
 
-	         option.text= pilotName;
-	         option.value = i;
-	         try {
-	           // for IE earlier than version 8
-	           pilotSelect.add(option,pilotSelect.options[null]);
+         var option=document.createElement("option");
 
-	         } catch (e) {
-	        	 pilotSelect.add(option,null);
+         option.text= pilotName;
+         option.value = i;
+         try {
+           // for IE earlier than version 8
+           pilotSelect.add(option,pilotSelect.options[null]);
 
-	         }
+         } catch (e) {
+        	 pilotSelect.add(option,null);
+
          }
-         
-         // Tour control functions.
-         function enterTour() {
-        	 
+     }
+     
+     // Tour control functions.
+     function enterTour() {
+    	 
 
-             google.earth.fetchKml(ge, href, fetchCallback);
+         google.earth.fetchKml(ge, href, fetchCallback);
 
-             function fetchCallback(fetchedKml) {
-                // Alert if no KML was found at the specified URL.
-                if (!fetchedKml) {
-                   setTimeout(function() {
-                      alert('Bad or null KML');
-                   }, 0);
-                   return;
+         function fetchCallback(fetchedKml) {
+            // Alert if no KML was found at the specified URL.
+            if (!fetchedKml) {
+               setTimeout(function() {
+                  alert('Bad or null KML');
+               }, 0);
+               return;
+            }
+
+            // Add the fetched KML into this Earth instance.
+            ge.getFeatures().appendChild(fetchedKml);
+
+            // Walk through the KML to find the tour object; assign to variable 'tour.'
+            var i = 0;
+            var k = 0;
+            walkKmlDom(fetchedKml, function() {
+               //alert(this.getType());
+               if (this.getType() == 'KmlTour') {
+                  tour = this;
+                  tours[i] = this;
+                  addTour(i,tour.getName());
+                  i++;
+                  //return false;
+               }
+               if (this.getType() == 'KmlPlacemark') {
+                   placemarks[k] = this;
+                   addPilot(k,this.getName(),this.getVisibility());
+                   k++;
+                   //return false;
                 }
+               
+            });
+            document.getElementById("playButton").disabled = false; 
+            ge.getTourPlayer().setTour(tours[0]);
+            
+            setTimeout(playTour,500);
+            
+            $("#pilotsActive").multiselect({
+            	   height : 400,
+            	   autoOpen:true,
+            	   click: function(event, ui){
+            		   		//alert(ui.value + ' ' + (ui.checked ? 'checked' : 'unchecked') );
+            		   		if ( ui.checked ) 
+            		   		  placemarks[ui.value].setVisibility(true);
+            		   		else
+              		   		  placemarks[ui.value].setVisibility(false);
 
-                // Add the fetched KML into this Earth instance.
-                ge.getFeatures().appendChild(fetchedKml);
+            		   },
+            		   beforeopen: function(){
+            		      //alert("Select about to be opened...");
+            		   },
+            		   open: function(){
+            			   //alert("Select opened!");
+            		   },
+            		   beforeclose: function(){
+            			   //alert("Select about to be closed...");
+            		   },
+            		   close: function(){
+            			   //alert("Select closed!");
+            		   },
+            		   checkAll: function(){
+            			   for (var i = 0; i < placemarks.length; i++) {
+            				   placemarks[i].setVisibility(true);
+            				}
+            		   },
+            		   uncheckAll: function(){
+            			   for (var i = 0; i < placemarks.length; i++) {
+            				   placemarks[i].setVisibility(false);
+            				}
+            		   },
+            		   optgrouptoggle: function(event, ui){
+            		      var values = $.map(ui.inputs, function(checkbox){
+            		         return checkbox.value;
+            		      }).join(", ");
+            		      
+            		      alert("Checkboxes " + (ui.checked ? "checked" : "unchecked") + ": " + values);
+            		   }
+            		});
+            
+            $("#pilotToFollow").multiselect({
+            	   multiple: false,
+            	   height : 400,
+            	   header: "Select a Pilot",
+            	   noneSelectedText: "Select a Pilot",
+            	   selectedList: 1
+            	});
+            
+            //$("#playButton").button()
+            
+            $( "#playButton" ).button({
+				icons: {
+				primary: "ui-icon-play"
+				},
+				text: false 
+			});
+            
+            $( "#pauseButton" ).button({
+				icons: {
+				primary: "ui-icon-pause"
+				},
+				text: false 
+			});                
+            
+            
+            $("#playButton").show();
+            $("#pauseButton").show();
+//             $("#pilotToFollow").show();
+//             $("#pilotsActive").show();
+            
+            $("#message").text("Select Pilot to follow: ");
+            
+            box1.remove();
+            
+            
 
-                // Walk through the KML to find the tour object; assign to variable 'tour.'
-                var i = 0;
-                var k = 0;
-                walkKmlDom(fetchedKml, function() {
-                   //alert(this.getType());
-                   if (this.getType() == 'KmlTour') {
-                      tour = this;
-                      tours[i] = this;
-                      addTour(i,tour.getName());
-                      i++;
-                      //return false;
-                   }
-                   if (this.getType() == 'KmlPlacemark') {
-                       placemarks[k] = this;
-                       addPilot(k,this.getName(),this.getVisibility());
-                       k++;
-                       //return false;
-                    }
-                   
-                });
-                document.getElementById("playButton").disabled = false; 
-                ge.getTourPlayer().setTour(tours[0]);
-                
-                $("#pilotsActive").multiselect({
-                	   click: function(event, ui){
-                		   		//alert(ui.value + ' ' + (ui.checked ? 'checked' : 'unchecked') );
-                		   		if ( ui.checked ) 
-                		   		  placemarks[ui.value].setVisibility(true);
-                		   		else
-                  		   		  placemarks[ui.value].setVisibility(false);
-
-                		   },
-                		   beforeopen: function(){
-                		      //alert("Select about to be opened...");
-                		   },
-                		   open: function(){
-                			   //alert("Select opened!");
-                		   },
-                		   beforeclose: function(){
-                			   //alert("Select about to be closed...");
-                		   },
-                		   close: function(){
-                			   //alert("Select closed!");
-                		   },
-                		   checkAll: function(){
-                			   for (var i = 0; i < placemarks.length; i++) {
-                				   placemarks[i].setVisibility(true);
-                				}
-                		   },
-                		   uncheckAll: function(){
-                			   for (var i = 0; i < placemarks.length; i++) {
-                				   placemarks[i].setVisibility(false);
-                				}
-                		   },
-                		   optgrouptoggle: function(event, ui){
-                		      var values = $.map(ui.inputs, function(checkbox){
-                		         return checkbox.value;
-                		      }).join(", ");
-                		      
-                		      alert("Checkboxes " + (ui.checked ? "checked" : "unchecked") + ": " + values);
-                		   }
-                		});
-                
-                $("#pilotToFollow").multiselect({
-                	   multiple: false,
-                	   header: "Select a Pilot",
-                	   noneSelectedText: "Select a Pilot",
-                	   selectedList: 1
-                	});
-                
-                //$("#playButton").button()
-                
-                $( "#playButton" ).button({
-					icons: {
-					primary: "ui-icon-play"
-					},
-					text: false 
-				});
-                
-                $( "#pauseButton" ).button({
-					icons: {
-					primary: "ui-icon-pause"
-					},
-					text: false 
-				});                
-                
-                
-                $("#playButton").show();
-                $("#pauseButton").show();
-//                 $("#pilotToFollow").show();
-//                 $("#pilotsActive").show();
-                
-                $("#message").text("Select Pilot to follow: ");
-                
-                box1.remove();
-                //$("#loader").hide();
-
-             }
          }
          
-         function playTour() {
-            ge.getTourPlayer().play();
-    		audio.play();
-         }
-         function pauseTour() {
-            ge.getTourPlayer().pause();
-            audio.pause();
-         }
-         
-         function resetTour() {
-            ge.getTourPlayer().reset();
-         }
-         function exitTour() {
-            ge.getTourPlayer().setTour(null);
-         }
 
-         function pilotChanged(){
-        	  var myselect = document.getElementById("pilotToFollow");
-        	  var pilotID = myselect.options[myselect.selectedIndex].value;
-        	  
-        	  var currentTime = ge.getTourPlayer().getCurrentTime();
-        	  var oldDuration = ge.getTourPlayer().getDuration()
-        	  
-        	  ge.getTourPlayer().setTour(tours[pilotID]);
-        	  
-        	  var newDuration = ge.getTourPlayer().getDuration()
-        	  
-        	  ge.getTourPlayer().setCurrentTime(currentTime * oldDuration / newDuration);
-        	  
-        	  ge.getTourPlayer().play();
-        	}
-         
-         function handleMouseClick(event){
-             var INSET_PIXELS_X = document.getElementById("map3d").offsetWidth - event.getClientX();
-             var INSET_PIXELS_Y = event.getClientY();
-             if (INSET_PIXELS_X < 500){
-               if (INSET_PIXELS_Y < 500){ toggleFullScreen();}
-             }
-           }
-
-           function toggleFullScreen(){
-             if (fullScreenState == true) {makeNormalScreen();}
-             else {makeFullScreen();}
-           }
-         
-           function makeFullScreen(){
-               var samplecontainer = document.getElementById('app');
-               var container = document.getElementById('map3d');
-               container.style.left = 0; 
-               container.style.top = 0;
-               container.style.width = samplecontainer.offsetWidth + 'px'; 
-               container.style.height = samplecontainer.offsetHeight + 'px';
-               fullScreenState = true;
-               noFullScreenIcon.setVisibility(fullScreenState);
-               fullScreenIcon.setVisibility(!fullScreenState);  
-            }
-
-            function makeNormalScreen(){
-               var samplecontainer = document.getElementById('app');
-               var container = document.getElementById('map3d');
-               container.style.left = samplecontainer.style.left; 
-               container.style.top = samplecontainer.style.top;
-               container.style.width = samplecontainer.offsetWidth + 'px'; 
-               container.style.height = samplecontainer.offsetHeight + 'px';
-               fullScreenState = false;
-               noFullScreenIcon.setVisibility(fullScreenState);
-               fullScreenIcon.setVisibility(!fullScreenState);
-            }
-           
-         function createFullScreenIcon() {
-             // create an image for the screen overlay
-             var icon = ge.createIcon('');
-             icon.setHref('http://earth-api-samples.googlecode.com/svn/trunk/external/dinther_fullscreen_tofull.png');
-             // create the screen overlay
-             fullScreenIcon = ge.createScreenOverlay('');
-             fullScreenIcon.setDrawOrder(60);
-             fullScreenIcon.setIcon(icon);
-             // anchor point in top left of icon.
-             fullScreenIcon.getScreenXY().setXUnits(ge.UNITS_FRACTION);
-             fullScreenIcon.getScreenXY().setYUnits(ge.UNITS_FRACTION);
-             fullScreenIcon.getScreenXY().setX(1);
-             fullScreenIcon.getScreenXY().setY(1);
-             // place icon in top left of screen.
-             fullScreenIcon.getOverlayXY().setXUnits(ge.UNITS_INSET_PIXELS);
-             fullScreenIcon.getOverlayXY().setYUnits(ge.UNITS_INSET_PIXELS);
-             fullScreenIcon.getOverlayXY().setX(2);
-             fullScreenIcon.getOverlayXY().setY(4);
-             // Set icon size.
-             fullScreenIcon.getSize().setXUnits(ge.UNITS_PIXELS);
-             fullScreenIcon.getSize().setYUnits(ge.UNITS_PIXELS);
-             fullScreenIcon.getSize().setY(32);
-             fullScreenIcon.getSize().setX(32);
-             // add the screen overlay to Earth
-             ge.getFeatures().appendChild(fullScreenIcon);
-         }
-
-         function createNormalScreenIcon() {
-             // create an image for the screen overlay
-             var icon = ge.createIcon('');
-             icon.setHref('http://earth-api-samples.googlecode.com/svn/trunk/external/dinther_fullscreen_tonormal.png');
-             // create the screen overlay
-             noFullScreenIcon = ge.createScreenOverlay('');
-             noFullScreenIcon.setDrawOrder(62);
-             noFullScreenIcon.setIcon(icon);
-             // anchor point in top left of icon.
-             noFullScreenIcon.getScreenXY().setXUnits(ge.UNITS_FRACTION);
-             noFullScreenIcon.getScreenXY().setYUnits(ge.UNITS_FRACTION);
-             noFullScreenIcon.getScreenXY().setX(1);
-             noFullScreenIcon.getScreenXY().setY(1);
-             // place icon in top right of screen.
-             noFullScreenIcon.getOverlayXY().setXUnits(ge.UNITS_INSET_PIXELS);
-             noFullScreenIcon.getOverlayXY().setYUnits(ge.UNITS_INSET_PIXELS);
-             noFullScreenIcon.getOverlayXY().setX(2);
-             noFullScreenIcon.getOverlayXY().setY(4);
-             // Set icon size.
-             noFullScreenIcon.getSize().setXUnits(ge.UNITS_PIXELS);
-             noFullScreenIcon.getSize().setYUnits(ge.UNITS_PIXELS);
-             noFullScreenIcon.getSize().setY(32);
-             noFullScreenIcon.getSize().setX(32);
-             noFullScreenIcon.setVisibility(false);
-             // add the screen overlay to Earth
-             ge.getFeatures().appendChild(noFullScreenIcon);
-         }
-         
-         function handleFullScreen(){
-             if (window.innerWidth == screen.width){
-               if (window.innerHeight > screen.height - 10){
-                 //this is likely caused by pressing F11 on the browser
-                 makeFullScreen();
-               } else if (fullScreenState == true) { makeNormalScreen();}
-             } else {makeNormalScreen();}
-           
-         }
-         
-         google.setOnLoadCallback(init);
-         
-
-         
-         
-      </script>
-      
-      
-      <script type="text/javascript">
-      
-
-      
-      </script>
-   </head>
-   <body>
-
-   	<div id ="app" style="background-color:black;color:white;font-size: 85%;position: absolute; left: 0px; top: 0px; width: 100%; height: 100%;"> 
+     }
      
-<!--       <hr> -->
-
-
-			
-			
-
-
-	   <div id ="controls" style="z-index: 200;" >
-     	 <button style = "display:none" id="playButton" onclick="playTour()" value="Start" >  </button>
-     	 <button style = "display:none" id="pauseButton"  onclick="pauseTour()" value="Pause"> </button>
-         <label id="message">Loading ... Please wait </label>
-         <select style = "display:none;font-size:15%;" id="pilotToFollow"  onchange="pilotChanged()"> </select>
-		 <select style = "display:none;font-size:15%;" id="pilotsActive" multiple="multiple" >		</select>      
-      </div>
-	   
-      <div id="map3d" style="z-index: 1;height: 80%; width: 100%;"></div>
-
-
-
-<!-- <iframe class="iframeshim" frameborder="0" scrolling="no"> -->
-<!-- 	<html><head></head><body> -->
-	
-	
-	
-      
-<!--       </body></html> -->
-<!-- </iframe> -->
-	  
-
- 	
- 	
+     function playTour() {
+        ge.getTourPlayer().play();
+		audio.play();
+     }
+     function pauseTour() {
+        ge.getTourPlayer().pause();
+        audio.pause();
+     }
      
- 	 <div id="footer" >
- 	 <p>Realized with TaskToKmz  - Source Code available @ <a style=color:white;" href="https://github.com/ToninoTarsi/TaskToKmz">https://github.com/ToninoTarsi/TaskToKmz</a>  </p>
- 	 
- 	 </div>
- 	 
- 	  
-	</div>
-	<div>
+     function resetTour() {
+        ge.getTourPlayer().reset();
+     }
+     function exitTour() {
+        ge.getTourPlayer().setTour(null);
+     }
+
+     function pilotChanged(){
+    	  var myselect = document.getElementById("pilotToFollow");
+    	  var pilotID = myselect.options[myselect.selectedIndex].value;
+    	  
+    	  var currentTime = ge.getTourPlayer().getCurrentTime();
+    	  var oldDuration = ge.getTourPlayer().getDuration()
+    	  
+    	  ge.getTourPlayer().setTour(tours[pilotID]);
+    	  
+    	  var newDuration = ge.getTourPlayer().getDuration()
+    	  
+    	  ge.getTourPlayer().setCurrentTime(currentTime * oldDuration / newDuration);
+    	  
+    	  ge.getTourPlayer().play();
+    	}
+     
+     function handleMouseClick(event){
+         var INSET_PIXELS_X = document.getElementById("map3d").offsetWidth - event.getClientX();
+         var INSET_PIXELS_Y = event.getClientY();
+         if (INSET_PIXELS_X < 32){
+           if (INSET_PIXELS_Y < 32){ toggleFullScreen();}
+         }
+       }
+
+       function toggleFullScreen(){
+         if (fullScreenState == true) {makeNormalScreen();}
+         else {makeFullScreen();}
+       }
+     
+       function makeFullScreen(){
+           var samplecontainer = document.getElementById('app');
+           var container = document.getElementById('map3d');
+           container.style.left = 0; 
+           container.style.top = 0;
+           container.style.width = samplecontainer.offsetWidth + 'px'; 
+           container.style.height = samplecontainer.offsetHeight + 'px';
+           fullScreenState = true;
+           noFullScreenIcon.setVisibility(fullScreenState);
+           fullScreenIcon.setVisibility(!fullScreenState);  
+        }
+
+        function makeNormalScreen(){
+           var samplecontainer = document.getElementById('app');
+           var container = document.getElementById('map3d');
+           container.style.left = samplecontainer.style.left; 
+           container.style.top = samplecontainer.style.top;
+           container.style.width = samplecontainer.offsetWidth + 'px'; 
+           container.style.height = samplecontainer.offsetHeight + 'px';
+           fullScreenState = false;
+           noFullScreenIcon.setVisibility(fullScreenState);
+           fullScreenIcon.setVisibility(!fullScreenState);
+        }
+       
+     function createFullScreenIcon() {
+         // create an image for the screen overlay
+         var icon = ge.createIcon('');
+         icon.setHref('http://earth-api-samples.googlecode.com/svn/trunk/external/dinther_fullscreen_tofull.png');
+         // create the screen overlay
+         fullScreenIcon = ge.createScreenOverlay('');
+         fullScreenIcon.setDrawOrder(60);
+         fullScreenIcon.setIcon(icon);
+         // anchor point in top left of icon.
+         fullScreenIcon.getScreenXY().setXUnits(ge.UNITS_FRACTION);
+         fullScreenIcon.getScreenXY().setYUnits(ge.UNITS_FRACTION);
+         fullScreenIcon.getScreenXY().setX(1);
+         fullScreenIcon.getScreenXY().setY(1);
+         // place icon in top left of screen.
+         fullScreenIcon.getOverlayXY().setXUnits(ge.UNITS_INSET_PIXELS);
+         fullScreenIcon.getOverlayXY().setYUnits(ge.UNITS_INSET_PIXELS);
+         fullScreenIcon.getOverlayXY().setX(2);
+         fullScreenIcon.getOverlayXY().setY(4);
+         // Set icon size.
+         fullScreenIcon.getSize().setXUnits(ge.UNITS_PIXELS);
+         fullScreenIcon.getSize().setYUnits(ge.UNITS_PIXELS);
+         fullScreenIcon.getSize().setY(32);
+         fullScreenIcon.getSize().setX(32);
+         // add the screen overlay to Earth
+         ge.getFeatures().appendChild(fullScreenIcon);
+     }
+
+     function createNormalScreenIcon() {
+         // create an image for the screen overlay
+         var icon = ge.createIcon('');
+         icon.setHref('http://earth-api-samples.googlecode.com/svn/trunk/external/dinther_fullscreen_tonormal.png');
+         // create the screen overlay
+         noFullScreenIcon = ge.createScreenOverlay('');
+         noFullScreenIcon.setDrawOrder(62);
+         noFullScreenIcon.setIcon(icon);
+         // anchor point in top left of icon.
+         noFullScreenIcon.getScreenXY().setXUnits(ge.UNITS_FRACTION);
+         noFullScreenIcon.getScreenXY().setYUnits(ge.UNITS_FRACTION);
+         noFullScreenIcon.getScreenXY().setX(1);
+         noFullScreenIcon.getScreenXY().setY(1);
+         // place icon in top right of screen.
+         noFullScreenIcon.getOverlayXY().setXUnits(ge.UNITS_INSET_PIXELS);
+         noFullScreenIcon.getOverlayXY().setYUnits(ge.UNITS_INSET_PIXELS);
+         noFullScreenIcon.getOverlayXY().setX(2);
+         noFullScreenIcon.getOverlayXY().setY(4);
+         // Set icon size.
+         noFullScreenIcon.getSize().setXUnits(ge.UNITS_PIXELS);
+         noFullScreenIcon.getSize().setYUnits(ge.UNITS_PIXELS);
+         noFullScreenIcon.getSize().setY(32);
+         noFullScreenIcon.getSize().setX(32);
+         noFullScreenIcon.setVisibility(false);
+         // add the screen overlay to Earth
+         ge.getFeatures().appendChild(noFullScreenIcon);
+     }
+     
+     function handleFullScreen(){
+         if (window.innerWidth == screen.width){
+           if (window.innerHeight > screen.height - 10){
+             //this is likely caused by pressing F11 on the browser
+             makeFullScreen();
+           } else if (fullScreenState == true) { makeNormalScreen();}
+         } else {makeNormalScreen();}
+       
+     }
+     
+     google.setOnLoadCallback(init);
+		
+	 </script>
+
+</HEAD>
+<BODY >
+
+
+
+<DIV class="ui-layout-center"  style="position: absolute; left: 0px; top: 0px; width: 100%; height: 100%;padding:0px;">   
+	<div id="map3d" style="padding:0px;">
+	</div>	
 	<audio id="audio" src="music/music.ogg" preload="auto">
-	</audio>
-	</div>
-   </body>
-</html>
+</DIV>
+<DIV class="ui-layout-west" style="padding:0px;">
+<div class="ui-layout-content" style="background-color:black;color:white;padding:0px;">
+		 <button style = "display:none" id="playButton" onclick="playTour()" value="Start" >  </button>
+     	 <button style = "display:none" id="pauseButton"  onclick="pauseTour()" value="Pause"> </button>
+     	 <br>
+     	 <hr>
+         <label id="message">Loading ... Please wait </label>
+         <br>
+         <select style = "display:none;" id="pilotToFollow"  onchange="pilotChanged()"> </select>
+         <hr>
+         <label >Select Pilots to show </label>
+         <br>
+		 <select style = "display:none;" id="pilotsActive" multiple="multiple" >		</select>   
+		 <div id="footer">
+		 <p >Realized with TaskToKmz  - Source Code available @ <a style=color:white;" href="https://github.com/ToninoTarsi/TaskToKmz">https://github.com/ToninoTarsi/TaskToKmz</a>  </p>
+		  </div>
+	  
+ 	 </div>
+ 
+</DIV>
+
+<!-- <DIV class="ui-layout-south">South</DIV> -->
+
+</BODY>
+</HTML>
